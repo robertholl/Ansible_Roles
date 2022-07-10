@@ -1,0 +1,6 @@
+---
+# vars file for ssh_key_rotate
+
+username: user_to_change
+key_name: id_rsa  
+host_group: test_group

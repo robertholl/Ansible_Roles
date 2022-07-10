@@ -1,0 +1,58 @@
+---
+# tasks file for ssh_key_rotate
+
+
+- name: "Delete SSH private Key for {{ username }}"
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.ssh/{{ key_name }}"
+    state: absent
+
+- name: "Delete SSH public Key for {{ username }}"
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.ssh/{{ key_name }}.pub"
+    state: absent
+
+- name: "SSH KeyGen command for {{ username }}"
+  tags: run
+  shell: "ssh-keygen -q -b 2048 -t rsa -N '' -C '{{ username }}@{{ ansible_hostname }}' -f /home/{{ username }}/.ssh/id_rsa"
+
+- name: Change ownership of private key
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.ssh/{{ key_name }}"
+    state: file
+    owner: "{{ username }}"
+    group: "{{ username }}"
+
+- name: Change ownership of public key
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.ssh/{{ key_name }}.pub"
+    state: file
+    owner: "{{ username }}"
+    group: "{{ username }}"
+
+- name: Create authorized_keys if file does not exist
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.ssh/authorized_keys"
+    state: touch
+    owner: "{{ username }}"
+    group: "{{ username }}"
+
+- name: Fetch the keyfile from the remote device to the Ansible server
+  tags: run
+  fetch: 
+    src: "/home/{{ username }}/.ssh/id_rsa.pub"
+    dest: "buffer/{{ansible_hostname}}-id_rsa.pub"
+    flat: yes
+
+- name: Copy .pub key to authorized_keys using Ansible module
+  tags: runcd
+  authorized_key:
+    user: "{{ username }}"
+    state: present
+    key: "{{ lookup('file','buffer/{{item}}-id_rsa.pub')}}"
+  # Below line would avoid copying public key to authorized_keys on self. Issue if rotating the user used by Ansible and also managing Ansible Server.
+  # Currently all managed servers will get all other servers public keys added to authorized_keys as well as self.
+  #when: "{{ item != ansible_hostname }}"
+  with_items: 
+    - "{{ groups[vars['host_group']] }}"
+
