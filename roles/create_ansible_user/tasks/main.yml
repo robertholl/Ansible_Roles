@@ -1,0 +1,46 @@
+---
+# tasks file for create_ansible_user
+- name: Create user
+  user:
+    name: ansadm 
+    comment: Ansible Admin User
+    uid: 1040
+    groups: ssh,sudo 
+    append: yes
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    shell: /bin/bash
+    create_home: true
+    update_password: always
+    password: "{{ user_ansadm_pw|password_hash('sha512') }}"
+
+- name: Set authorized key for user ansadm copying it from current user
+  ansible.posix.authorized_key:
+    user: ansadm 
+    state: present
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+- name: Set sudoers file to allow ansadm user no password sudo access
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%ansadm All='
+    line: 'ansadm ALL=(ALL) NOPASSWD: ALL' 
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Check if pi user exists
+  shell: id -u pi
+  ignore_errors: true
+  register: userinfo
+
+- name: Update pi user password ONLY if pi user exists
+  block:
+
+    - name: Update pi user password
+      user:
+        name: pi
+        update_password: always
+        password: "{{ user_pi_pw|password_hash('sha512') }}"
+  
+  when: userinfo.rc == 0

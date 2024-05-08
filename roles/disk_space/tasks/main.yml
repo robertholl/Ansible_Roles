@@ -1,0 +1,13 @@
+---
+# tasks file for disk_space
+
+- name: Get system disk space
+  ansible.builtin.shell: df -h > ~/script_results
+
+- name: Collect script results and store on server
+  ansible.builtin.fetch:
+    src: ~/script_results
+    dest: results/{{ inventory_hostname }}_disk_space_info
+    flat: yes
+
+
