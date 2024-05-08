@@ -1,0 +1,12 @@
+---
+# tasks file for get_diskspace
+
+- name: Create diskspace report
+  ansible.builtin.shell: df -h > ~/diskspace_report
+
+- name: Copy diskspace report to server
+  ansible.builtin.fetch:
+    src: ~/diskspace_report
+    dest: results/{{ inventory_hostname }}_diskspace_report
+    flat: yes
+

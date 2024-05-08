@@ -1,0 +1,9 @@
+---
+# tasks file for uptime
+- name: Get system uptime
+  ansible.builtin.shell: uptime -s
+  register: uptime
+
+- name: Print system uptime
+  ansible.builtin.debug:
+    msg: "Uptime is: {{ uptime.stdout }}"
