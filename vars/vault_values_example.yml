@@ -1,0 +1,12 @@
+Vault password: 
+---
+# vars file for create users
+
+user_ansadm_pw: Q()est*2024*
+user_pi_pw: Q()est*2024*
+
+# vars file for update users
+username: user_to_change
+key_name: id_rsa  
+host_group: test_group
+

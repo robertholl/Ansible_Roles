@@ -1,4 +1,9 @@
 ---
+- name: Ensure group "ssh" exists
+  ansible.builtin.group:
+    name: ssh
+    state: present
+
 # tasks file for create_ansible_user
 - name: Create user
   user:
